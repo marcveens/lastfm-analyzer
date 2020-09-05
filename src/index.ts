@@ -1,6 +1,5 @@
 import express from 'express';
 import { ElasticSearchClient } from './ElasticSearch/ElasticSearchClient';
-import { FileLoader } from './FileLoader/FileLoader';
 import { Routes } from './Router/Routes';
 
 require('dotenv').config();
@@ -13,10 +12,6 @@ const esClient = new ElasticSearchClient();
 if (!fileName) {
     throw new Error('No fileName provided as env variable');
 }
-
-// const fileLoader = new FileLoader();
-// fileLoader.load(fileName);
-
 
 app.get('/', Routes.homepage());
 app.get('/indices', Routes.getIndices(esClient));

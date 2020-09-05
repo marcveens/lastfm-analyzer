@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { ElasticSearchClient } from '../ElasticSearch/ElasticSearchClient';
 import { indexNames } from '../ElasticSearch/indexNames';
+import { FileLoader } from '../FileLoader/FileLoader';
 
 type ProcessRouteCallbackType = (res: express.Response, req: express.Request) => Promise<void>;
 
@@ -19,7 +20,19 @@ export class Routes {
     })
 
     static populateLastFMIndex = (esClient: ElasticSearchClient) => Routes.processRoute(async (res) => {
-        res.send(await esClient.addDocument(indexNames.lastfm, { test: 1, bla: 'test' }));
+        const fileName = process.env.FILENAME;
+        const fileLoader = new FileLoader();
+        const jsonStream = fileLoader.load(fileName!);
+        let docList: unknown[] = [];
+
+        jsonStream.on('data', ({ value }) => {
+            docList = docList.concat(value.track);
+        });
+
+        jsonStream.on('end', async () => {
+            await esClient.addDocuments(indexNames.lastfm, docList);
+            res.send(`${docList.length} documents added`);
+        });
     })
 
     static homepage = () => Routes.processRoute(async (res) => {

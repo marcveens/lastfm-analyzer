@@ -30,4 +30,18 @@ export class ElasticSearchClient {
             body
         });
     }
+
+    addDocuments = async (index: string, data: any[]) => {
+        console.log('bulk', data.length);
+        return await this.client.helpers.bulk({
+            datasource: data,
+            onDocument (doc) {
+                return {
+                  index: { _index: index }
+                }
+              }
+        })
+        .then(() => console.log('done'))
+        .catch(e => console.log(e.meta));
+    }
 }
