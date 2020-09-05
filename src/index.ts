@@ -1,9 +1,14 @@
+import express from 'express';
 import { ElasticSearchClient } from './ElasticSearch/ElasticSearchClient';
 import { FileLoader } from './FileLoader/FileLoader';
+import { Routes } from './Router/Routes';
 
 require('dotenv').config();
 
+const app = express();
+const port = process.env.PORT || 8080;
 const fileName = process.env.FILENAME;
+const esClient = new ElasticSearchClient();
 
 if (!fileName) {
     throw new Error('No fileName provided as env variable');
@@ -12,5 +17,13 @@ if (!fileName) {
 // const fileLoader = new FileLoader();
 // fileLoader.load(fileName);
 
-const esClient = new ElasticSearchClient();
-esClient.getIndices();
+
+app.get('/', Routes.homepage());
+app.get('/indices', Routes.getIndices(esClient));
+app.get('/create-lastfm-index', Routes.createLastFmIndex(esClient));
+app.get('/delete-lastfm-index', Routes.deleteLastFmIndex(esClient));
+app.get('/populate-lastfm-index', Routes.populateLastFMIndex(esClient));
+
+app.listen(port, () => {
+    console.log(`LastFM analyzer listening at http://localhost:${port}`)
+});
