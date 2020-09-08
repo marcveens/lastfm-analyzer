@@ -3,10 +3,10 @@ type LastFmPageAttributes = {
     total: string;
     user: string;
     pagePage: string;
-    totlaPages: string;
+    totalPages: string;
 };
 
-type LastFmTrack = {
+export type LastFmTrackRaw = {
     artist: {
         mbid: string;
         '#text': string;
@@ -32,9 +32,13 @@ type LastFmTrack = {
     };
 };
 
-type LastFmPage = {
+export type LastFmTrack = {
+    name: string;
+};
+
+export type LastFmPage = {
     '@attr': LastFmPageAttributes;
-    track: LastFmTrack[];
+    track: LastFmTrackRaw[];
 };
 
 export type LastFmImport = LastFmPage[];

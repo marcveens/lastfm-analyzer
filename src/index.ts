@@ -17,6 +17,7 @@ app.get('/', Routes.homepage());
 app.get('/indices', Routes.getIndices(esClient));
 app.get('/create-lastfm-index', Routes.createLastFmIndex(esClient));
 app.get('/delete-lastfm-index', Routes.deleteLastFmIndex(esClient));
+app.get('/reset-lastfm-index', Routes.resetLastFmIndex(esClient));
 app.get('/populate-lastfm-index', Routes.populateLastFMIndex(esClient));
 
 app.listen(port, () => {
