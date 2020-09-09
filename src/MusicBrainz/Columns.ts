@@ -1,0 +1,30 @@
+export type ArtistColumns = {
+    id: string;
+    gid: string;
+    name: string;
+    sort_name: string;
+    begin_date_year: string;
+    begin_date_month: string;
+    begin_date_day: string;
+    end_date_year: string;
+    end_date_month: string;
+    end_date_day: string;
+    type: string;
+    area: string;
+    gender: string;
+    comment: string;
+    edits_pending: string;
+    last_updated: string;
+    ended: string;
+    begin_area: string;
+    end_area: string;
+};
+
+export const trackColumns = ['id', 'gid', 'recording', 'medium', 'position', 'number', 'name', 'artist_credit', 'length', 'edits_pending', 'last_updated', 'is_data_track'];
+export const recordingColumns = ['id', 'gid', 'name', 'artist_credit', 'length', 'comment', 'edits_pending', 'last_updated', 'video'];
+export const recordingTagColumns = ['recording', 'tag', 'count'];
+export const mediumColumns = ['id', 'release', 'position', 'format', 'name', 'edits_pending', 'last_updated', 'track_count'];
+export const releaseColumns = ['id', 'gid', 'name', 'artist_credit', 'release_group', 'status', 'packaging', 'language', 'script', 'barcode', 'comment', 'edits_pending', 'quality'];
+export const releaseTagColumns = ['release', 'tag', 'count'];
+export const artistColumns: (keyof ArtistColumns)[] = ['id', 'gid', 'name', 'sort_name', 'begin_date_year', 'begin_date_month', 'begin_date_day', 'end_date_year', 'end_date_month', 'end_date_day', 'type', 'area', 'gender', 'comment', 'edits_pending', 'last_updated', 'ended', 'begin_area', 'end_area'];
+export const artistTagColumns = ['artists', 'tag', 'count', 'last_updated'];

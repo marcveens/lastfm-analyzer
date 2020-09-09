@@ -13,6 +13,8 @@ Get data:
 
 https://docs.microsoft.com/en-us/windows/wsl/install-win10
 https://github.com/metabrainz/musicbrainz-docker
+https://itnext.io/using-node-js-to-read-really-really-large-files-pt-1-d2057fe76b33 (event-stream)
+https://stackoverflow.com/a/23695940/1223588 (ook event-stream)
 
 https://github.com/metabrainz/musicbrainz-server/blob/962c5c01e64988b8197eb6ea1325bec6af69ff7f/admin/sql/CreateTables.sql
 

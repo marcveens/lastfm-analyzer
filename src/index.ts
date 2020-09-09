@@ -19,6 +19,7 @@ app.get('/create-lastfm-index', Routes.createLastFmIndex(esClient));
 app.get('/delete-lastfm-index', Routes.deleteLastFmIndex(esClient));
 app.get('/reset-lastfm-index', Routes.resetLastFmIndex(esClient));
 app.get('/populate-lastfm-index', Routes.populateLastFMIndex(esClient));
+app.get('/populate-artists-index', Routes.populateArtistsIndex(esClient));
 
 app.listen(port, () => {
     console.log(`LastFM analyzer listening at http://localhost:${port}`)

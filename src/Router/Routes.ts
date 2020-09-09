@@ -5,7 +5,7 @@ import { indexNames } from '../ElasticSearch/indexNames';
 import { FileLoader } from '../FileLoader/FileLoader';
 import { mapLastFmRecord } from '../LastFm/mapLastFmRecord';
 import { MusicBrainzClient } from '../MusicBrainz/MusicBrainzClient';
-import { LastFmPage } from '../types/LastFmImport';
+import { LastFmPage, LastFmTrack } from '../types/LastFmImport';
 
 type ProcessRouteCallbackType = (res: express.Response, req: express.Request) => Promise<void>;
 
@@ -24,25 +24,56 @@ export class Routes {
 
     static resetLastFmIndex = (esClient: ElasticSearchClient) => Routes.processRoute(async (res) => {
         await esClient.deleteIndex(indexNames.lastfm);
-        res.send(await esClient.createIndex(indexNames.lastfm));
+        await esClient.createIndex(indexNames.lastfm);
+        res.send({ message: 'LastFM index deleted and created' });
     })
 
     static populateLastFMIndex = (esClient: ElasticSearchClient) => Routes.processRoute(async (res) => {
-        res.send(await MusicBrainzClient.getRelease());
-        
-        // const fileName = process.env.FILENAME;
-        // const fileLoader = new FileLoader();
-        // const jsonStream = fileLoader.load(fileName!);
-        // let docList: unknown[] = [];
+        const fileName = process.env.FILENAME;
+        const fileLoader = new FileLoader();
+        const jsonStream = fileLoader.load(fileName!);
+        const musicBrainzClient = new MusicBrainzClient();
+        let trackList: LastFmTrack[] = [];
+        let artistMbids: string[] = [];
 
-        // jsonStream.on('data', ({ value }: { value: LastFmPage }) => {
-        //     docList = docList.concat(value.track.map(mapLastFmRecord));
-        // });
+        jsonStream.on('data', ({ value }: { value: LastFmPage }) => {
+            trackList = trackList.concat(value.track.map(track => {
+                const artistMbId = track.artist.mbid;
 
-        // jsonStream.on('end', async () => {
-        //     await esClient.addDocuments(indexNames.lastfm, docList);
-        //     res.send(`${docList.length} documents added`);
-        // });
+                if (artistMbId && artistMbids.indexOf(artistMbId) === -1) {
+                    artistMbids.push(track.artist.mbid);
+                }
+
+                return mapLastFmRecord(track);
+            }));
+        });
+
+        jsonStream.on('end', async () => {
+            const artists = await musicBrainzClient.getArtists(artistMbids);
+
+            // Enrich with MusicBrainz data
+            trackList = trackList.map(track => {
+                if (artists) {
+                    const matchingArtistInfo = artists.find(a => track.artist.mbid === a.gid);
+
+                    if (matchingArtistInfo) {
+                        track.artist.extras = matchingArtistInfo;
+                    }
+                }
+
+                return track;
+            });
+
+            await esClient.addDocuments(indexNames.lastfm, trackList);
+            res.send(`${trackList.length} documents added`);
+        });
+    })
+
+    static populateArtistsIndex = (esClient: ElasticSearchClient) => Routes.processRoute(async (res) => {
+        const filepath = "E:/musicbrainz/mbdump.tar/mbdump/mbdump/track";
+        // parseFile(filepath);
+
+        res.send('ok');
     })
 
     static homepage = () => Routes.processRoute(async (res) => {
