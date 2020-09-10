@@ -1,6 +1,7 @@
 import express from 'express';
 import { ElasticSearchClient } from './ElasticSearch/ElasticSearchClient';
 import { Routes } from './Router/Routes';
+import { UI } from 'bull-board';
 
 require('dotenv').config();
 
@@ -13,6 +14,10 @@ if (!fileName) {
     throw new Error('No fileName provided as env variable');
 }
 
+// Jobs
+app.use('/admin/queues', UI);
+
+// Site
 app.get('/', Routes.homepage());
 app.get('/indices', Routes.getIndices(esClient));
 app.get('/create-lastfm-index', Routes.createLastFmIndex(esClient));
