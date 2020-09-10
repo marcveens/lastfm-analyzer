@@ -9,6 +9,10 @@ export const mapLastFmRecord = (raw: LastFmTrackRaw): LastFmTrack => {
         artist: {
             name: raw.artist['#text'],
             mbid: raw.artist.mbid
+        },
+        album: {
+            name: raw.album['#text'],
+            mbid: raw.album.mbid
         }
     };
 };

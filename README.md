@@ -4,7 +4,7 @@ Ideas:
 
 To export LastFM data: https://lastfm.ghan.nl/export/
 Music DB: https://musicbrainz.org/doc/MusicBrainz_Identifier
-Music DB Schema: https://musicbrainz.org/doc/MusicBrainz_Database/Schema
+Music DB Schema: https://wiki.musicbrainz.org/-/images/5/52/ngs.png
 
 Get data:
 - Artist: https://musicbrainz.org/ws/2/artist/a0cef17a-4574-44f4-9f97-fd068615dac6?fmt=json&inc=tags

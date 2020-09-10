@@ -17,7 +17,7 @@ export const parseFile = (filePath: string, resolveAt: (columns: string[]) => bo
                 })
                 .on('error', reject)
                 .on('end', () => {
-                    console.log('done');
+                    console.log(`done streaming ${filePath}`);
                     resolve(resultCache);
                 })
             );

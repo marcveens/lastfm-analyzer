@@ -29,19 +29,32 @@ export class Routes {
     })
 
     static populateLastFMIndex = (esClient: ElasticSearchClient) => Routes.processRoute(async (res) => {
+        const startTime = process.hrtime();
         const fileName = process.env.FILENAME;
         const fileLoader = new FileLoader();
         const jsonStream = fileLoader.load(fileName!);
         const musicBrainzClient = new MusicBrainzClient();
         let trackList: LastFmTrack[] = [];
         let artistMbids: string[] = [];
+        let albumMbids: string[] = [];
+        let trackMbids: string[] = [];
 
         jsonStream.on('data', ({ value }: { value: LastFmPage }) => {
             trackList = trackList.concat(value.track.map(track => {
-                const artistMbId = track.artist.mbid;
+                const artistMbid = track.artist.mbid;
+                const albumMbid = track.album.mbid;
+                const trackMbid = track.mbid;
 
-                if (artistMbId && artistMbids.indexOf(artistMbId) === -1) {
-                    artistMbids.push(track.artist.mbid);
+                if (artistMbid && artistMbids.indexOf(artistMbid) === -1) {
+                    artistMbids.push(artistMbid);
+                }
+
+                if (albumMbid && albumMbids.indexOf(albumMbid) === -1) {
+                    albumMbids.push(albumMbid);
+                }
+
+                if (trackMbid && trackMbids.indexOf(trackMbid) === -1) {
+                    trackMbids.push(trackMbid);
                 }
 
                 return mapLastFmRecord(track);
@@ -50,30 +63,47 @@ export class Routes {
 
         jsonStream.on('end', async () => {
             const artists = await musicBrainzClient.getArtists(artistMbids);
+            const albums = await musicBrainzClient.getAlbums(albumMbids);
+            const tracks = await musicBrainzClient.getTracks(trackMbids);
+            const artistTags = await musicBrainzClient.getArtistTags(artists.map(x => x.id));
+            const albumTags = await musicBrainzClient.getAlbumTags(albums.map(x => x.id));
+            const trackTags = await musicBrainzClient.getTrackTags(tracks.map(x => x.recording));
 
             // Enrich with MusicBrainz data
             trackList = trackList.map(track => {
-                if (artists) {
-                    const matchingArtistInfo = artists.find(a => track.artist.mbid === a.gid);
+                const matchingArtistInfo = artists.find(x => track.artist.mbid === x.gid);
+                const matchingAlbumInfo = albums.find(x => track.album.mbid === x.gid);
+                const matchingTrackInfo = tracks.find(x => track.track.mbid === x.gid);
 
-                    if (matchingArtistInfo) {
-                        track.artist.extras = matchingArtistInfo;
-                    }
+                if (matchingArtistInfo) {
+                    const matchingArtistTags = artistTags.filter(x => matchingArtistInfo.id === x.artist);
+                    const genres = musicBrainzClient.getGenres(matchingArtistTags.map(x => x.tag));
+                    track.artist.extras = matchingArtistInfo;
+                    track.artist.genres = genres;
+                }
+
+                if (matchingAlbumInfo) {
+                    const matchingAlbumTags = albumTags.filter(x => matchingAlbumInfo.id === x.release);
+                    const genres = musicBrainzClient.getGenres(matchingAlbumTags.map(x => x.tag));
+                    track.album.extras = matchingAlbumInfo;
+                    track.album.genres = genres;
+                }
+
+                if (matchingTrackInfo) {
+                    const matchingTrackTags = trackTags.filter(x => matchingTrackInfo.id === x.recording);
+                    const genres = musicBrainzClient.getGenres(matchingTrackTags.map(x => x.tag));
+                    track.track.extras = matchingTrackInfo;
+                    track.track.genres = genres;
                 }
 
                 return track;
             });
 
             await esClient.addDocuments(indexNames.lastfm, trackList);
+            const endTime = process.hrtime(startTime);
+            console.info(`populateLastFMIndex done | ${trackList.length} items added | execution time: ${endTime[0]}s ${endTime[1] / 1000000}ms`);
             res.send(`${trackList.length} documents added`);
         });
-    })
-
-    static populateArtistsIndex = (esClient: ElasticSearchClient) => Routes.processRoute(async (res) => {
-        const filepath = "E:/musicbrainz/mbdump.tar/mbdump/mbdump/track";
-        // parseFile(filepath);
-
-        res.send('ok');
     })
 
     static homepage = () => Routes.processRoute(async (res) => {
@@ -81,6 +111,7 @@ export class Routes {
     })
 
     private static processRoute = (cb: ProcessRouteCallbackType) => async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        console.log(req.url);
         try {
             await cb(res, req);
         } catch (e) {
