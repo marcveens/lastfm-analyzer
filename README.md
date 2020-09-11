@@ -21,3 +21,7 @@ https://github.com/metabrainz/musicbrainz-server/blob/962c5c01e64988b8197eb6ea13
 
 track (0dc2dc49-1fb0-4571-a762-944f2b0679b9) -> recording (16295638)
 track (0dc2dc49-1fb0-4571-a762-944f2b0679b9) -> medium (1781941) -> release (1686270)
+
+Performance: 
+600 tracks = > 10 minutes processing
+Look into SQL -> https://blog.netnerds.net/2015/01/powershell-high-performance-techniques-for-importing-csv-to-sql-server/

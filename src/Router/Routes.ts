@@ -117,11 +117,21 @@ export class Routes {
                 done();
             });
         });
-        
+
         console.log('add process');
         populateLastFMIndexQueue.add({});
 
         res.send(`Index population in progress..`);
+    })
+
+    static createMusicBrainzTables = (mbClient: MusicBrainzClient) => Routes.processRoute(async (res) => {
+        mbClient.createTables();
+        res.send(`Tables created`);
+    })
+
+    static deleteMusicBrainzTables = (mbClient: MusicBrainzClient) => Routes.processRoute(async (res) => {
+        mbClient.deleteTables();
+        res.send(`Tables deleted`);
     })
 
     static homepage = () => Routes.processRoute(async (res) => {

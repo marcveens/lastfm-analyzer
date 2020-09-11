@@ -25,6 +25,7 @@
     "@types/express": "^4.17.8",
     "@types/jest": "^26.0.13",
     "@types/lodash": "^4.14.161",
+    "@types/mssql": "^6.0.4",
     "@types/node": "^14.6.3",
     "@types/stream-json": "^1.5.1",
     "jest": "^26.4.2",
@@ -39,6 +40,8 @@
     "event-stream": "^4.0.1",
     "express": "^4.17.1",
     "lodash": "^4.17.20",
+    "msnodesqlv8": "^2.0.5",
+    "mssql": "^6.2.1",
     "stream-json": "^1.7.1"
   }
 }

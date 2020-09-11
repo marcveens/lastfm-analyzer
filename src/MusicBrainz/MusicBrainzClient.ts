@@ -1,6 +1,9 @@
+import * as sql from 'mssql/msnodesqlv8';
 import { ArtistColumns, artistColumns, ArtistTagColumns, artistTagColumns, genreColumns, GenreColumns, recordingTagColumns, RecordingTagColumns, releaseColumns, ReleaseColumns, releaseTagColumns, ReleaseTagColumns, tagColumns, TagColumns, trackColumns, TrackColumns } from './Columns';
-import { parseFile } from './parseFile';
+import { parseFile, streamFile } from './parseFile';
 import uniq from 'lodash/uniq';
+import { MsSqlClient } from '../MsSql/MsSqlClient';
+import { createArtistTable, createTagTable } from './createTables';
 
 type GenericMusicModel<T> = { [key in keyof T]: string };
 
@@ -17,7 +20,7 @@ export class MusicBrainzClient {
 
     getArtists = async (mbids: string[]) => {
         try {
-            return await this.getModelFromFile<ArtistColumns>(mbids, `${this.mbdumpPath}/artist`, artistColumns, 'gid');
+            return await this.getModelFromFileByIdList<ArtistColumns>(mbids, `${this.mbdumpPath}/artist`, artistColumns, 'gid');
         } catch (e) {
             return [];
         }
@@ -25,9 +28,9 @@ export class MusicBrainzClient {
 
     getArtistTags = async (artistIds: string[]) => {
         try {
-            let artistTags = await this.getModelFromFile<ArtistTagColumns>(artistIds, `${this.mbdumpDerivedPath}/artist_tag`, artistTagColumns, 'artist');
+            let artistTags = await this.getModelFromFileByIdList<ArtistTagColumns>(artistIds, `${this.mbdumpDerivedPath}/artist_tag`, artistTagColumns, 'artist');
             const uniqueTags = uniq(artistTags.map(x => x.tag));
-            const tags = await this.getModelFromFile<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
+            const tags = await this.getModelFromFileByIdList<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
 
             artistTags = artistTags.map(x => ({
                 ...x,
@@ -43,7 +46,7 @@ export class MusicBrainzClient {
 
     getAlbums = async (mbids: string[]) => {
         try {
-            return await this.getModelFromFile<ReleaseColumns>(mbids, `${this.mbdumpPath}/release`, releaseColumns, 'gid');
+            return await this.getModelFromFileByIdList<ReleaseColumns>(mbids, `${this.mbdumpPath}/release`, releaseColumns, 'gid');
         } catch (e) {
             return [];
         }
@@ -51,9 +54,9 @@ export class MusicBrainzClient {
 
     getAlbumTags = async (albumIds: string[]) => {
         try {
-            let albumTags = await this.getModelFromFile<ReleaseTagColumns>(albumIds, `${this.mbdumpDerivedPath}/release_tag`, releaseTagColumns, 'release');
+            let albumTags = await this.getModelFromFileByIdList<ReleaseTagColumns>(albumIds, `${this.mbdumpDerivedPath}/release_tag`, releaseTagColumns, 'release');
             const uniqueTags = uniq(albumTags.map(x => x.tag));
-            const tags = await this.getModelFromFile<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
+            const tags = await this.getModelFromFileByIdList<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
 
             albumTags = albumTags.map(x => ({
                 ...x,
@@ -69,7 +72,7 @@ export class MusicBrainzClient {
 
     getTracks = async (mbids: string[]) => {
         try {
-            return await this.getModelFromFile<TrackColumns>(mbids, `${this.mbdumpPath}/track`, trackColumns, 'gid');
+            return await this.getModelFromFileByIdList<TrackColumns>(mbids, `${this.mbdumpPath}/track`, trackColumns, 'gid');
         } catch (e) {
             return [];
         }
@@ -77,9 +80,9 @@ export class MusicBrainzClient {
 
     getTrackTags = async (trackIds: string[]) => {
         try {
-            let trackTags = await this.getModelFromFile<RecordingTagColumns>(trackIds, `${this.mbdumpDerivedPath}/recording_tag`, recordingTagColumns, 'recording');
+            let trackTags = await this.getModelFromFileByIdList<RecordingTagColumns>(trackIds, `${this.mbdumpDerivedPath}/recording_tag`, recordingTagColumns, 'recording');
             const uniqueTags = uniq(trackTags.map(x => x.tag));
-            const tags = await this.getModelFromFile<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
+            const tags = await this.getModelFromFileByIdList<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
 
             trackTags = trackTags.map(x => ({
                 ...x,
@@ -107,6 +110,31 @@ export class MusicBrainzClient {
         }
     }
 
+    createTables = async () => {
+        try {
+            // const tagTable = await createTagTable(`${this.mbdumpDerivedPath}/tag`);
+            const artistTable = await createArtistTable(`${this.mbdumpPath}/artist`)
+
+            // await MsSqlClient.bulk(tagTable);
+            // console.log('Created tags table');
+            // TODO: Add to Bull queue
+            await MsSqlClient.bulk(artistTable);
+            console.log('Created artist table');
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    deleteTables = async () => {
+        const tables: string[] = ['tag', 'artist'];
+
+        try {
+            await MsSqlClient.query(tables.map(x => `DROP TABLE IF EXISTS ${x}`).join(';'));
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
     private fillGenreCache = async () => {
         try {
             const rawGenres = await parseFile(`${this.mbdumpPath}/genre`, () => true);
@@ -116,7 +144,7 @@ export class MusicBrainzClient {
         }
     };
 
-    private getModelFromFile = async <T>(idList: string[], filePath: string, columns: (keyof T)[], columnToFind: keyof T): Promise<GenericMusicModel<T>[]> => {
+    private getModelFromFileByIdList = async <T>(idList: string[], filePath: string, columns: (keyof T)[], columnToFind: keyof T): Promise<GenericMusicModel<T>[]> => {
         const musicData = await parseFile(`${filePath}`, (record: string[]) => {
             const idColumnIndex = this.getIndexOfColumn<T>(columns, columnToFind);
             return idList.indexOf(record[idColumnIndex]) > -1;
@@ -124,6 +152,7 @@ export class MusicBrainzClient {
 
         return this.mapListToModel<T>(musicData, columns);
     }
+
 
     private getIndexOfColumn = <T>(columns: (keyof T)[], columnToFind: keyof T) => {
         return columns.findIndex(c => c === columnToFind);
