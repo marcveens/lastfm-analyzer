@@ -4,6 +4,8 @@ import { parseFile, streamFile } from './parseFile';
 import uniq from 'lodash/uniq';
 import { MsSqlClient } from '../MsSql/MsSqlClient';
 import { createArtistTable, createTagTable } from './createTables';
+import Queue from 'bull';
+import { setQueues } from 'bull-board';
 
 type GenericMusicModel<T> = { [key in keyof T]: string };
 
@@ -14,7 +16,6 @@ export class MusicBrainzClient {
     private genresCache: GenericMusicModel<GenreColumns>[] = [];
 
     constructor() {
-        console.log('MusicBrainzClient constructor');
         this.fillGenreCache();
     }
 
@@ -111,25 +112,34 @@ export class MusicBrainzClient {
     }
 
     createTables = async () => {
-        try {
-            // const tagTable = await createTagTable(`${this.mbdumpDerivedPath}/tag`);
-            const artistTable = await createArtistTable(`${this.mbdumpPath}/artist`)
+        const createTablesQueue = new Queue('CreateTables');
+        setQueues(createTablesQueue);
 
-            // await MsSqlClient.bulk(tagTable);
-            // console.log('Created tags table');
-            // TODO: Add to Bull queue
-            await MsSqlClient.bulk(artistTable);
-            console.log('Created artist table');
-        } catch (err) {
-            console.log(err);
-        }
+        createTablesQueue.process(async (job, done) => {
+            try {
+                console.log('[CREATE-TABLES] Start');
+                await createTagTable(`${this.mbdumpDerivedPath}/tag`);
+                await createArtistTable(`${this.mbdumpPath}/artist`);
+
+                console.log('[CREATE-TABLES] Done');
+                done();
+
+            } catch (err) {
+                console.log('Err', err);
+                job.moveToFailed(err);
+            }
+        });
+
+        createTablesQueue.add({});
     }
 
     deleteTables = async () => {
-        const tables: string[] = ['tag', 'artist'];
+        const tables: string[] = ['tag'];
 
         try {
+            console.log('[DELETE-TABLES] Start');
             await MsSqlClient.query(tables.map(x => `DROP TABLE IF EXISTS ${x}`).join(';'));
+            console.log('[DELETE-TABLES] Done');
         } catch (err) {
             console.log(err);
         }

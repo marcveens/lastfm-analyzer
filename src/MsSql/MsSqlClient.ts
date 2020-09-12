@@ -1,7 +1,7 @@
 import * as sql from 'mssql/msnodesqlv8';
 
 export class MsSqlClient {
-    static query = (query: string) => {
+    static query = (query: string): Promise<sql.IResult<any>> => {
         return MsSqlClient.connect(async (connection) => {
             return await connection.query(query);
         });
@@ -11,11 +11,11 @@ export class MsSqlClient {
         return MsSqlClient.connect(async (connection) => {
             return new Promise((resolve, reject) => {
                 const request = connection.request();
-                request.bulk(table, (err, result) => {
+                request.bulk(table, (err) => {
                     if (err) {
                         reject(err);
                     } else {
-                        resolve(result);
+                        resolve();
                     }
                 });
             });
