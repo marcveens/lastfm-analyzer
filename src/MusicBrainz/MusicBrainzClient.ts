@@ -3,7 +3,7 @@ import { ArtistColumns, artistColumns, ArtistTagColumns, artistTagColumns, genre
 import { parseFile, streamFile } from './parseFile';
 import uniq from 'lodash/uniq';
 import { MsSqlClient } from '../MsSql/MsSqlClient';
-import { createArtistTable, createTagTable } from './createTables';
+import { createArtistTable, createArtistTagTable, createRecordingTagTable, createReleaseTable, createReleaseTagTable, createTagTable, createTrackTable } from './createTables';
 import Queue from 'bull';
 import { setQueues } from 'bull-board';
 
@@ -119,7 +119,12 @@ export class MusicBrainzClient {
             try {
                 console.log('[CREATE-TABLES] Start');
                 await createTagTable(`${this.mbdumpDerivedPath}/tag`);
-                await createArtistTable(`${this.mbdumpPath}/artist`);
+                // await createArtistTable(`${this.mbdumpPath}/artist`);
+                // await createArtistTagTable(`${this.mbdumpDerivedPath}/artist_tag`);
+                // await createReleaseTable(`${this.mbdumpPath}/release`);
+                // await createReleaseTagTable(`${this.mbdumpDerivedPath}/release_tag`);
+                // await createRecordingTagTable(`${this.mbdumpDerivedPath}/recording_tag`);
+                // await createTrackTable(`${this.mbdumpPath}/track`);
 
                 console.log('[CREATE-TABLES] Done');
                 done();
@@ -134,7 +139,7 @@ export class MusicBrainzClient {
     }
 
     deleteTables = async () => {
-        const tables: string[] = ['tag'];
+        const tables: string[] = ['track'];
 
         try {
             console.log('[DELETE-TABLES] Start');

@@ -40,12 +40,81 @@ export const createArtistTable = async (path: string) => createTable(path, () =>
     return table;
 });
 
+export const createArtistTagTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('artist_tag');
+    table.columns.add('artist', sql.Int, { nullable: false });
+    table.columns.add('tag', sql.Int, { nullable: false });
+    table.columns.add('count', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+
+    return table;
+});
+
+
+export const createReleaseTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('release');
+    table.columns.add('id', sql.Int, { primary: true });
+    table.columns.add('gid', sql.UniqueIdentifier, { nullable: false });
+    table.columns.add('name', sql.Text, { nullable: false });
+    table.columns.add('artist_credit', sql.Int, { nullable: false });
+    table.columns.add('release_group', sql.Int, { nullable: false });
+    table.columns.add('status', sql.Int, { nullable: false });
+    table.columns.add('packaging', sql.Int, { nullable: false });
+    table.columns.add('language', sql.Int, { nullable: false });
+    table.columns.add('script', sql.Int, { nullable: false });
+    table.columns.add('barcode', sql.VarChar(255), { nullable: false });
+    table.columns.add('comment', sql.VarChar(255), { nullable: false });
+    table.columns.add('edits_pending', sql.Int, { nullable: false });
+    table.columns.add('quality', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+
+    return table;
+});
+
+export const createReleaseTagTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('release_tag');
+    table.columns.add('release', sql.Int, { nullable: false });
+    table.columns.add('tag', sql.Int, { nullable: false });
+    table.columns.add('count', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+
+    return table;
+});
+
+export const createRecordingTagTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('recording_tag');
+    table.columns.add('recording', sql.Int, { nullable: false });
+    table.columns.add('tag', sql.Int, { nullable: false });
+    table.columns.add('count', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+
+    return table;
+});
+
+export const createTrackTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('track');
+    table.columns.add('id', sql.Int, { primary: true });
+    table.columns.add('gid', sql.UniqueIdentifier, { nullable: false });
+    table.columns.add('recording', sql.Int, { nullable: false });
+    table.columns.add('medium', sql.Int, { nullable: false });
+    table.columns.add('position', sql.Int, { nullable: false });
+    table.columns.add('number', sql.Text, { nullable: false });
+    table.columns.add('name', sql.Text, { nullable: false });
+    table.columns.add('artist_credit', sql.Int, { nullable: false });
+    table.columns.add('length', sql.Int, { nullable: false });
+    table.columns.add('edits_pending', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+    table.columns.add('is_data_Track', sql.Bit, { nullable: false });
+
+    return table;
+});
+
+
 // Had to pass table as a function because otherwise the reference of the original table would be changed
 // The idea is to only change a new "instance" of the table in this function
 // This function loops through the provided file and bulk inserts them into MsSql by a 1000 at the time
-export const createTable = async (path: string, table: () => sql.Table) => {
+const createTable = async (path: string, table: () => sql.Table) => {
     let rowCount = 0;
-    let firstRun = true;
 
     const getTable = (create: boolean) => {
         const newTableInstance = table();
@@ -54,7 +123,7 @@ export const createTable = async (path: string, table: () => sql.Table) => {
         return newTableInstance;
     }
 
-    let tableInstance = getTable(firstRun);
+    let tableInstance = getTable(true);
 
     if (tableInstance.name) {
         // Safety check. This also makes sure createTable can't be run again if it already exists
@@ -68,8 +137,7 @@ export const createTable = async (path: string, table: () => sql.Table) => {
         if (rowCount === bulkPerNumber) {
             MsSqlClient.bulk(tableInstance);
             rowCount = 0;
-            firstRun = false;
-            tableInstance = getTable(firstRun);
+            tableInstance = getTable(false);
         }
 
         const typedRow = getTypedRow(row, tableInstance.columns);
@@ -87,7 +155,7 @@ export const createTable = async (path: string, table: () => sql.Table) => {
 
 const doesTableExist = async (tableName: string) => {
     const response = await MsSqlClient.query(`SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${tableName}'`);
-    
+
     return response.recordset.length > 0;
 };
 

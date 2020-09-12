@@ -40,3 +40,4 @@ SQL Performance
 - Putting data into SQL database so fetching data is quick and data relations maintain
     - ~~Inserting data using NodeJS and bulk insert all data at once (took 1:33.71 for 389.937 rows (artist db))~~
     - Inserting data using NodeJS and bulk insert per 1000 (took 0:36.54 for 389.937 rows (artist db))
+- Ran into MsSql 10GB DB limit. Switched to MySql
