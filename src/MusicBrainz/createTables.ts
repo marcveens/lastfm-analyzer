@@ -1,4 +1,4 @@
-import * as sql from 'mssql/msnodesqlv8';
+import * as sql from 'mssql';
 import { SqlClient } from '../Sql/SqlClient';
 import { streamFile } from './parseFile';
 
