@@ -3,7 +3,7 @@ import { ArtistColumns, artistColumns, ArtistTagColumns, artistTagColumns, genre
 import { parseFile, streamFile } from './parseFile';
 import uniq from 'lodash/uniq';
 import { MsSqlClient } from '../MsSql/MsSqlClient';
-import { createArtistTable, createArtistTagTable, createRecordingTagTable, createReleaseTable, createReleaseTagTable, createTagTable, createTrackTable } from './createTables';
+import { createArtistTable, createArtistTagTable, createGenreTable, createRecordingTagTable, createReleaseTable, createReleaseTagTable, createTagTable, createTrackTable } from './createTables';
 import Queue from 'bull';
 import { setQueues } from 'bull-board';
 
@@ -16,7 +16,7 @@ export class MusicBrainzClient {
     private genresCache: GenericMusicModel<GenreColumns>[] = [];
 
     constructor() {
-        this.fillGenreCache();
+        // this.fillGenreCache();
     }
 
     getArtists = async (mbids: string[]) => {
@@ -119,12 +119,13 @@ export class MusicBrainzClient {
             try {
                 console.log('[CREATE-TABLES] Start');
                 await createTagTable(`${this.mbdumpDerivedPath}/tag`);
-                // await createArtistTable(`${this.mbdumpPath}/artist`);
-                // await createArtistTagTable(`${this.mbdumpDerivedPath}/artist_tag`);
-                // await createReleaseTable(`${this.mbdumpPath}/release`);
-                // await createReleaseTagTable(`${this.mbdumpDerivedPath}/release_tag`);
-                // await createRecordingTagTable(`${this.mbdumpDerivedPath}/recording_tag`);
-                // await createTrackTable(`${this.mbdumpPath}/track`);
+                await createArtistTable(`${this.mbdumpPath}/artist`);
+                await createArtistTagTable(`${this.mbdumpDerivedPath}/artist_tag`);
+                await createReleaseTable(`${this.mbdumpPath}/release`);
+                await createReleaseTagTable(`${this.mbdumpDerivedPath}/release_tag`);
+                await createRecordingTagTable(`${this.mbdumpDerivedPath}/recording_tag`);
+                await createTrackTable(`${this.mbdumpPath}/track`);
+                await createGenreTable(`${this.mbdumpPath}/genre`);
 
                 console.log('[CREATE-TABLES] Done');
                 done();
@@ -139,11 +140,14 @@ export class MusicBrainzClient {
     }
 
     deleteTables = async () => {
-        const tables: string[] = ['track'];
+        const tables: string[] = ['genre'];
 
         try {
             console.log('[DELETE-TABLES] Start');
-            await MsSqlClient.query(tables.map(x => `DROP TABLE IF EXISTS ${x}`).join(';'));
+            const sqlClient = new MsSqlClient();
+            sqlClient.connect();
+            await sqlClient.query(tables.map(x => `DROP TABLE IF EXISTS ${x}`).join(';'));
+            sqlClient.disconnect();
             console.log('[DELETE-TABLES] Done');
         } catch (err) {
             console.log(err);

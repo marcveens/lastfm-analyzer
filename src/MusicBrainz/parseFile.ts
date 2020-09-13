@@ -14,7 +14,7 @@ export const parseFile = (filePath: string, resolveAt: (columns: string[]) => bo
             .pipe(es.split())
             .pipe(es
                 .mapSync(line => {
-                    const splitLine = line.replace(/\\N/g, '').split('\t');
+                    const splitLine = line.replace(/\\N/g, '').replace(/\\\\N/g, '').split('\t');
                     const foundMbid = resolveAt(splitLine);
 
                     if (foundMbid) {
@@ -41,7 +41,7 @@ export const streamFile = (filePath: string, getRow: (columns: string[]) => void
             .pipe(es.split())
             .pipe(es
                 .mapSync((line: string) => {
-                    const splitLine = line.replace(/\\N/g, '').split('\t');
+                    const splitLine = line.replace(/\\N/g, '').replace(/\\\\N/g, '').split('\t');
                     if (splitLine.length > 0 && splitLine[0] !== '') {
                         getRow(splitLine);
                     }

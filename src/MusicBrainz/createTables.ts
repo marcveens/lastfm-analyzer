@@ -1,10 +1,9 @@
-import fs from 'fs';
 import * as sql from 'mssql/msnodesqlv8';
 import { MsSqlClient } from '../MsSql/MsSqlClient';
 import { streamFile } from './parseFile';
 
-type ColumnTypes = 'varchar' | 'int' | 'datetime' | 'bit' | 'date' | 'uniqueidentifier';
-const bulkPerNumber = 1000;
+type ColumnTypes = 'varchar' | 'int' | 'datetime' | 'bit' | 'date' | 'VarChar(255)';
+const bulkPerNumber = 10000;
 
 export const createTagTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('tag');
@@ -18,7 +17,7 @@ export const createTagTable = async (path: string) => createTable(path, () => {
 export const createArtistTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('artist');
     table.columns.add('id', sql.Int, { primary: true });
-    table.columns.add('gid', sql.UniqueIdentifier, { nullable: false });
+    table.columns.add('gid', sql.VarChar(255), { nullable: false });
     table.columns.add('name', sql.Text, { nullable: false });
     table.columns.add('sort_name', sql.Text, { nullable: false });
     table.columns.add('begin_date_year', sql.Int);
@@ -33,7 +32,7 @@ export const createArtistTable = async (path: string) => createTable(path, () =>
     table.columns.add('comment', sql.Text, { nullable: false });
     table.columns.add('edits_pending', sql.Int);
     table.columns.add('last_updated', sql.Text);
-    table.columns.add('ended', sql.Bit);
+    table.columns.add('ended', sql.VarChar(255));
     table.columns.add('begin_area', sql.Int);
     table.columns.add('end_area', sql.Text);
 
@@ -52,9 +51,9 @@ export const createArtistTagTable = async (path: string) => createTable(path, ()
 
 
 export const createReleaseTable = async (path: string) => createTable(path, () => {
-    const table = new sql.Table('release');
+    const table = new sql.Table('release_');
     table.columns.add('id', sql.Int, { primary: true });
-    table.columns.add('gid', sql.UniqueIdentifier, { nullable: false });
+    table.columns.add('gid', sql.VarChar(255), { nullable: false });
     table.columns.add('name', sql.Text, { nullable: false });
     table.columns.add('artist_credit', sql.Int, { nullable: false });
     table.columns.add('release_group', sql.Int, { nullable: false });
@@ -73,7 +72,7 @@ export const createReleaseTable = async (path: string) => createTable(path, () =
 
 export const createReleaseTagTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('release_tag');
-    table.columns.add('release', sql.Int, { nullable: false });
+    table.columns.add('release_', sql.Int, { nullable: false });
     table.columns.add('tag', sql.Int, { nullable: false });
     table.columns.add('count', sql.Int, { nullable: false });
     table.columns.add('last_updated', sql.Text, { nullable: false });
@@ -94,7 +93,7 @@ export const createRecordingTagTable = async (path: string) => createTable(path,
 export const createTrackTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('track');
     table.columns.add('id', sql.Int, { primary: true });
-    table.columns.add('gid', sql.UniqueIdentifier, { nullable: false });
+    table.columns.add('gid', sql.VarChar(255), { nullable: false });
     table.columns.add('recording', sql.Int, { nullable: false });
     table.columns.add('medium', sql.Int, { nullable: false });
     table.columns.add('position', sql.Int, { nullable: false });
@@ -104,7 +103,19 @@ export const createTrackTable = async (path: string) => createTable(path, () => 
     table.columns.add('length', sql.Int, { nullable: false });
     table.columns.add('edits_pending', sql.Int, { nullable: false });
     table.columns.add('last_updated', sql.Text, { nullable: false });
-    table.columns.add('is_data_Track', sql.Bit, { nullable: false });
+    table.columns.add('is_data_Track', sql.VarChar(255), { nullable: false });
+
+    return table;
+});
+
+export const createGenreTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('genre');
+    table.columns.add('id', sql.Int, { primary: true });
+    table.columns.add('gid', sql.VarChar(255), { nullable: false });
+    table.columns.add('genre', sql.VarChar(255), { nullable: false });
+    table.columns.add('unknown_col', sql.VarChar(255), { nullable: false });
+    table.columns.add('number', sql.VarChar(255), { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
 
     return table;
 });
@@ -113,54 +124,92 @@ export const createTrackTable = async (path: string) => createTable(path, () => 
 // Had to pass table as a function because otherwise the reference of the original table would be changed
 // The idea is to only change a new "instance" of the table in this function
 // This function loops through the provided file and bulk inserts them into MsSql by a 1000 at the time
-const createTable = async (path: string, table: () => sql.Table) => {
+const createTable = async (path: string, getTable: () => sql.Table) => {
+    const sqlClient = new MsSqlClient();
     let rowCount = 0;
+    let insertStatements: string[] = [];
+    
+    let tableInstance = getTable();
+    const baseInsertStatement = `INSERT INTO ${tableInstance.name} VALUES `;
 
-    const getTable = (create: boolean) => {
-        const newTableInstance = table();
-        newTableInstance.create = create;
+    const createTableSql = generateCreateTableSql(tableInstance);
 
-        return newTableInstance;
-    }
-
-    let tableInstance = getTable(true);
+    sqlClient.connect();
 
     if (tableInstance.name) {
-        // Safety check. This also makes sure createTable can't be run again if it already exists
         if (await doesTableExist(tableInstance.name)) {
             console.log(`[CREATE-TABLES] Partially aborted. Table "${tableInstance.name}" already exists.`);
             return tableInstance;
         }
     }
 
+    await sqlClient.query(createTableSql);
+
     await streamFile(path, (row) => {
         if (rowCount === bulkPerNumber) {
-            MsSqlClient.bulk(tableInstance);
+            // console.log(`${baseInsertStatement}${insertStatements.join(',')}`.length);
+            sqlClient.query(`${baseInsertStatement}${insertStatements.join(',')}`);
             rowCount = 0;
-            tableInstance = getTable(false);
+            insertStatements = [];
         }
 
         const typedRow = getTypedRow(row, tableInstance.columns);
-        tableInstance.rows.add(...typedRow);
+        insertStatements.push(`('${typedRow.join('\', \'')}')`);
         rowCount++;
     });
 
     // If there are rows left after stream
-    if (tableInstance.rows.length > 0) {
-        MsSqlClient.bulk(tableInstance);
+    if (insertStatements.length > 0) {
+        await sqlClient.query(`${baseInsertStatement}${insertStatements.join(',')}`);
     }
+
+    sqlClient.disconnect();
 
     return tableInstance;
 };
 
 const doesTableExist = async (tableName: string) => {
-    const response = await MsSqlClient.query(`SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${tableName}'`);
+    const sqlClient = new MsSqlClient();
+    sqlClient.connect();
+    const response = await sqlClient.query(`SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${tableName}'`);
+    sqlClient.disconnect();
 
-    return response.recordset.length > 0;
+    return response.length > 0;
+};
+
+const generateCreateTableSql = (table: sql.Table): string => {
+    const fields: string[] = [];
+    const primaryKeys: string[] = [];
+    const indices: string[] = [];
+
+    table.columns.forEach(col => {
+        // @ts-ignore declaration not defined in types
+        const type = col.type.declaration;
+        // @ts-ignore length not defined in types
+        const typeLength = col.length;
+
+        if (col.primary) {
+            primaryKeys.push(`PRIMARY KEY (${col.name})`);
+        }
+
+        if (col.name.indexOf('gid') > -1) {
+            indices.push('INDEX (gid)');
+        }
+
+        fields.push(`${col.name} ${type}${typeLength ? `(${typeLength})` : ''} ${!col.nullable ? 'NOT NULL' : ''}`);
+    });
+
+    const combinedFields = fields.concat(primaryKeys).concat(indices);
+
+    return `CREATE TABLE ${table.name} (${combinedFields.join(', ')});`;
 };
 
 const getTypedRow = (row: string[], model: sql.columns): any[] => {
     return row.map((x, index) => {
+        if (model[index].name.indexOf('comment') > -1) {
+            return '';
+        }
+
         if (model[index]) {
             // @ts-ignore declaration not defined in types
             const type: ColumnTypes = model[index].type.declaration;
@@ -174,10 +223,10 @@ const getTypedRow = (row: string[], model: sql.columns): any[] => {
                     const isValidDate = !isNaN(Date.parse(x));
                     return isValidDate ? new Date(x) : null;
                 default:
-                    return x;
+                    return x.replace(/\'/g, '\'\'');
             }
         }
 
-        return x;
+        return x.replace(/\'/g, '\'\'');
     });
 };

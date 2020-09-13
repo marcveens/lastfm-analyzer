@@ -1,42 +1,28 @@
-import * as sql from 'mssql/msnodesqlv8';
+import mysql from 'mysql';
 
 export class MsSqlClient {
-    static query = (query: string): Promise<sql.IResult<any>> => {
-        return MsSqlClient.connect(async (connection) => {
-            return await connection.query(query);
-        });
-    }
+    connection = mysql.createConnection({
+        host: 'localhost',
+        database: 'musicbrainz',
+        user: 'root',
+        password: 'admin',
+        charset: 'utf8mb4_unicode_ci',
+        multipleStatements: true
+    });
 
-    static bulk = (table: sql.Table) => {
-        return MsSqlClient.connect(async (connection) => {
-            return new Promise((resolve, reject) => {
-                const request = connection.request();
-                request.bulk(table, (err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
+    query = (query: string): Promise<any[]> => {
+        return new Promise((resolve, reject) => {
+            return this.connection.query(query, (err, results, fields) => {
+                if (err) {
+                    console.log(err);
+                    reject(err);
+                }
+
+                resolve(results as any[]);
             });
         });
     }
 
-    private static connect = async (cb: (connection: sql.ConnectionPool) => Promise<any>) => {
-        const connection: sql.ConnectionPool = new sql.ConnectionPool({
-            server: '.\\SQLEXPRESS',
-            database: 'MusicBrainz',
-            options: {
-                trustedConnection: true,
-                enableArithAbort: true
-            }
-        });
-        await connection.connect();
-
-        const result = await cb(connection);
-
-        connection.close();
-
-        return result;
-    }
+    connect = () => this.connection.connect();
+    disconnect = () => this.connection.end();
 }
