@@ -12,9 +12,10 @@ export class ElasticSearchClient {
         return await this.client.cat.indices();
     }
 
-    createIndex = async (name: string) => {
+    createIndex = async (name: string, body: Object = {}) => {
         return await this.client.indices.create({
-            index: name
+            index: name,
+            body
         });
     }
 

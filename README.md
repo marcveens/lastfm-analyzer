@@ -22,9 +22,12 @@ https://github.com/metabrainz/musicbrainz-server/blob/962c5c01e64988b8197eb6ea13
 track (0dc2dc49-1fb0-4571-a762-944f2b0679b9) -> recording (16295638)
 track (0dc2dc49-1fb0-4571-a762-944f2b0679b9) -> medium (1781941) -> release (1686270)
 
-Performance: 
+Performance with searching through files using NodeJS: 
 600 tracks = > 10 minutes processing
-Look into SQL -> https://blog.netnerds.net/2015/01/powershell-high-performance-techniques-for-importing-csv-to-sql-server/
+
+Performance with SQL:
+600 tracks = 2.22 seconds
+
 
 SQL Performance
 - Bulk insert artist (389.937 rows) 1:33.71
@@ -41,3 +44,10 @@ SQL Performance
     - ~~Inserting data using NodeJS and bulk insert all data at once (took 1:33.71 for 389.937 rows (artist db))~~
     - Inserting data using NodeJS and bulk insert per 1000 (took 0:36.54 for 389.937 rows (artist db))
 - Ran into MsSql 10GB DB limit. Switched to MySql
+
+
+### Processing times
+#### Inserting 217.400 tracks into Elasticsearch
+- Without memory caching: 786 tracks in 10 seconds
+- With artist and album memory caching: 1134 tracks in 10 seconds
+- With artist, album and track memory caching: 1536 tracks in 10 seconds

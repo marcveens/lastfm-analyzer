@@ -1,5 +1,5 @@
 import * as sql from 'mssql/msnodesqlv8';
-import { MsSqlClient } from '../MsSql/MsSqlClient';
+import { SqlClient } from '../Sql/SqlClient';
 import { streamFile } from './parseFile';
 
 type ColumnTypes = 'varchar' | 'int' | 'datetime' | 'bit' | 'date' | 'VarChar(255)';
@@ -41,7 +41,7 @@ export const createArtistTable = async (path: string) => createTable(path, () =>
 
 export const createArtistTagTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('artist_tag');
-    table.columns.add('artist', sql.Int, { nullable: false });
+    table.columns.add('artist', sql.Int, { primary: true, nullable: false });
     table.columns.add('tag', sql.Int, { nullable: false });
     table.columns.add('count', sql.Int, { nullable: false });
     table.columns.add('last_updated', sql.Text, { nullable: false });
@@ -72,7 +72,7 @@ export const createReleaseTable = async (path: string) => createTable(path, () =
 
 export const createReleaseTagTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('release_tag');
-    table.columns.add('release_', sql.Int, { nullable: false });
+    table.columns.add('release_', sql.Int, { primary: true, nullable: false });
     table.columns.add('tag', sql.Int, { nullable: false });
     table.columns.add('count', sql.Int, { nullable: false });
     table.columns.add('last_updated', sql.Text, { nullable: false });
@@ -82,7 +82,7 @@ export const createReleaseTagTable = async (path: string) => createTable(path, (
 
 export const createRecordingTagTable = async (path: string) => createTable(path, () => {
     const table = new sql.Table('recording_tag');
-    table.columns.add('recording', sql.Int, { nullable: false });
+    table.columns.add('recording', sql.Int, { primary: true, nullable: false });
     table.columns.add('tag', sql.Int, { nullable: false });
     table.columns.add('count', sql.Int, { nullable: false });
     table.columns.add('last_updated', sql.Text, { nullable: false });
@@ -120,12 +120,36 @@ export const createGenreTable = async (path: string) => createTable(path, () => 
     return table;
 });
 
+export const createReleaseGroupTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('release_group');
+    table.columns.add('id', sql.Int, { primary: true });
+    table.columns.add('gid', sql.VarChar(255), { nullable: false });
+    table.columns.add('name', sql.Text, { nullable: false });
+    table.columns.add('artist_credit', sql.VarChar(255), { nullable: false });
+    table.columns.add('type', sql.VarChar(255), { nullable: false });
+    table.columns.add('comment', sql.VarChar(255), { nullable: false });
+    table.columns.add('edits_pending', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+
+    return table;
+});
+
+export const createReleaseGroupTagTable = async (path: string) => createTable(path, () => {
+    const table = new sql.Table('release_group_tag');
+    table.columns.add('release_group', sql.Int, { primary: true, nullable: false });
+    table.columns.add('tag', sql.Int, { nullable: false });
+    table.columns.add('count', sql.Int, { nullable: false });
+    table.columns.add('last_updated', sql.Text, { nullable: false });
+
+    return table;
+});
+
 
 // Had to pass table as a function because otherwise the reference of the original table would be changed
 // The idea is to only change a new "instance" of the table in this function
 // This function loops through the provided file and bulk inserts them into MsSql by a 1000 at the time
 const createTable = async (path: string, getTable: () => sql.Table) => {
-    const sqlClient = new MsSqlClient();
+    const sqlClient = new SqlClient();
     let rowCount = 0;
     let insertStatements: string[] = [];
     
@@ -169,7 +193,7 @@ const createTable = async (path: string, getTable: () => sql.Table) => {
 };
 
 const doesTableExist = async (tableName: string) => {
-    const sqlClient = new MsSqlClient();
+    const sqlClient = new SqlClient();
     sqlClient.connect();
     const response = await sqlClient.query(`SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${tableName}'`);
     sqlClient.disconnect();

@@ -28,6 +28,7 @@
       "isolatedModules": true,
       "noEmit": true,
       "downlevelIteration": true,
+      "noUnusedLocals": true,
       "typeRoots": [
         "src/types",
         "node_modules/@types"

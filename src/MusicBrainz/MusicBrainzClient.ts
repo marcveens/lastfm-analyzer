@@ -1,111 +1,86 @@
-import * as sql from 'mssql/msnodesqlv8';
-import { ArtistColumns, artistColumns, ArtistTagColumns, artistTagColumns, genreColumns, GenreColumns, recordingTagColumns, RecordingTagColumns, releaseColumns, ReleaseColumns, releaseTagColumns, ReleaseTagColumns, tagColumns, TagColumns, trackColumns, TrackColumns } from './Columns';
-import { parseFile, streamFile } from './parseFile';
-import uniq from 'lodash/uniq';
-import { MsSqlClient } from '../MsSql/MsSqlClient';
-import { createArtistTable, createArtistTagTable, createGenreTable, createRecordingTagTable, createReleaseTable, createReleaseTagTable, createTagTable, createTrackTable } from './createTables';
+import { SqlClient } from '../Sql/SqlClient';
+import { createArtistTable, createArtistTagTable, createGenreTable, createRecordingTagTable, createReleaseGroupTable, createReleaseGroupTagTable, createReleaseTable, createReleaseTagTable, createTagTable, createTrackTable } from './createTables';
 import Queue from 'bull';
 import { setQueues } from 'bull-board';
 
-type GenericMusicModel<T> = { [key in keyof T]: string };
+type GetGenres = {
+    name: string;
+}[];
 
 export class MusicBrainzClient {
     private mbdumpPath = process.env.MBDUMP_PATH;
     private mbdumpDerivedPath = process.env.MBDUMP_DERIVED_PATH;
 
-    private genresCache: GenericMusicModel<GenreColumns>[] = [];
+    private artistCache: { [key: string]: GetGenres } = {};
+    private albumCache: { [key: string]: GetGenres } = {};
+    private trackCache: { [key: string]: GetGenres } = {};
 
-    constructor() {
-        // this.fillGenreCache();
-    }
 
-    getArtists = async (mbids: string[]) => {
+    getArtistGenres = async (mbid: string, sqlClient: SqlClient): Promise<GetGenres> => {
         try {
-            return await this.getModelFromFileByIdList<ArtistColumns>(mbids, `${this.mbdumpPath}/artist`, artistColumns, 'gid');
+            if (this.artistCache[mbid]) {
+                return Promise.resolve(this.artistCache[mbid]);
+            }
+
+            const query = `
+                SELECT tag.name FROM artist 
+                LEFT JOIN artist_tag ON artist_tag.artist = artist.id
+                INNER JOIN tag ON artist_tag.tag = tag.id
+                INNER JOIN genre ON tag.id = genre.id
+                WHERE artist.gid = '${mbid}'            
+            `;
+            const res = await sqlClient.query(query);
+
+            this.artistCache[mbid] = res;
+
+            return res;
         } catch (e) {
             return [];
         }
     }
 
-    getArtistTags = async (artistIds: string[]) => {
+    getAlbumGenres = async (mbid: string, sqlClient: SqlClient): Promise<GetGenres> => {
         try {
-            let artistTags = await this.getModelFromFileByIdList<ArtistTagColumns>(artistIds, `${this.mbdumpDerivedPath}/artist_tag`, artistTagColumns, 'artist');
-            const uniqueTags = uniq(artistTags.map(x => x.tag));
-            const tags = await this.getModelFromFileByIdList<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
+            if (this.albumCache[mbid]) {
+                return Promise.resolve(this.albumCache[mbid]);
+            }
 
-            artistTags = artistTags.map(x => ({
-                ...x,
-                tag: tags.find(t => x.tag === t.id)?.name || x.tag
-            }));
+            const query = `
+                SELECT tag.name FROM release_ 
+                LEFT JOIN release_group ON release_group.id = release_.release_group
+                LEFT JOIN release_group_tag ON release_group_tag.release_group = release_group.id
+                INNER JOIN tag ON release_group_tag.tag = tag.id
+                INNER JOIN genre ON tag.id = genre.id
+                WHERE release_.gid = '${mbid}'            
+            `;
+            const res = await sqlClient.query(query);
+            
+            this.albumCache[mbid] = res;
 
-            return artistTags;
-
+            return res;
         } catch (e) {
             return [];
         }
     }
 
-    getAlbums = async (mbids: string[]) => {
+    getTrackGenres = async (mbid: string, sqlClient: SqlClient): Promise<GetGenres> => {
         try {
-            return await this.getModelFromFileByIdList<ReleaseColumns>(mbids, `${this.mbdumpPath}/release`, releaseColumns, 'gid');
-        } catch (e) {
-            return [];
-        }
-    }
+            if (this.trackCache[mbid]) {
+                return Promise.resolve(this.trackCache[mbid]);
+            }
 
-    getAlbumTags = async (albumIds: string[]) => {
-        try {
-            let albumTags = await this.getModelFromFileByIdList<ReleaseTagColumns>(albumIds, `${this.mbdumpDerivedPath}/release_tag`, releaseTagColumns, 'release');
-            const uniqueTags = uniq(albumTags.map(x => x.tag));
-            const tags = await this.getModelFromFileByIdList<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
+            const query = `
+                SELECT tag.name FROM track 
+                LEFT JOIN recording_tag ON recording_tag.recording = track.recording
+                INNER JOIN tag ON recording_tag.tag = tag.id
+                INNER JOIN genre ON tag.id = genre.id
+                WHERE track.gid = '${mbid}'            
+            `;
+            const res = await sqlClient.query(query);
+            
+            this.trackCache[mbid] = res;
 
-            albumTags = albumTags.map(x => ({
-                ...x,
-                tag: tags.find(t => x.tag === t.id)?.name || x.tag
-            }));
-
-            return albumTags;
-
-        } catch (e) {
-            return [];
-        }
-    }
-
-    getTracks = async (mbids: string[]) => {
-        try {
-            return await this.getModelFromFileByIdList<TrackColumns>(mbids, `${this.mbdumpPath}/track`, trackColumns, 'gid');
-        } catch (e) {
-            return [];
-        }
-    }
-
-    getTrackTags = async (trackIds: string[]) => {
-        try {
-            let trackTags = await this.getModelFromFileByIdList<RecordingTagColumns>(trackIds, `${this.mbdumpDerivedPath}/recording_tag`, recordingTagColumns, 'recording');
-            const uniqueTags = uniq(trackTags.map(x => x.tag));
-            const tags = await this.getModelFromFileByIdList<TagColumns>(uniqueTags, `${this.mbdumpDerivedPath}/tag`, tagColumns, 'id');
-
-            trackTags = trackTags.map(x => ({
-                ...x,
-                tag: tags.find(t => x.tag === t.id)?.name || x.tag
-            }));
-
-            return trackTags;
-
-        } catch (e) {
-            return [];
-        }
-    }
-
-    getGenres = (tagNames: string[]): string[] => {
-        try {
-            return this.genresCache.reduce<string[]>((genreList, genre) => {
-                if (tagNames.indexOf(genre.genre) > -1) {
-                    genreList.push(genre.genre);
-                }
-
-                return genreList;
-            }, []);
+            return res;
         } catch (e) {
             return [];
         }
@@ -123,6 +98,8 @@ export class MusicBrainzClient {
                 await createArtistTagTable(`${this.mbdumpDerivedPath}/artist_tag`);
                 await createReleaseTable(`${this.mbdumpPath}/release`);
                 await createReleaseTagTable(`${this.mbdumpDerivedPath}/release_tag`);
+                await createReleaseGroupTable(`${this.mbdumpPath}/release_group`);
+                await createReleaseGroupTagTable(`${this.mbdumpDerivedPath}/release_group_tag`);
                 await createRecordingTagTable(`${this.mbdumpDerivedPath}/recording_tag`);
                 await createTrackTable(`${this.mbdumpPath}/track`);
                 await createGenreTable(`${this.mbdumpPath}/genre`);
@@ -144,7 +121,7 @@ export class MusicBrainzClient {
 
         try {
             console.log('[DELETE-TABLES] Start');
-            const sqlClient = new MsSqlClient();
+            const sqlClient = new SqlClient();
             sqlClient.connect();
             await sqlClient.query(tables.map(x => `DROP TABLE IF EXISTS ${x}`).join(';'));
             sqlClient.disconnect();
@@ -152,40 +129,5 @@ export class MusicBrainzClient {
         } catch (err) {
             console.log(err);
         }
-    };
-
-    private fillGenreCache = async () => {
-        try {
-            const rawGenres = await parseFile(`${this.mbdumpPath}/genre`, () => true);
-            const genres = this.mapListToModel<GenreColumns>(rawGenres, genreColumns);
-            this.genresCache = genres;
-        } catch (e) {
-        }
-    };
-
-    private getModelFromFileByIdList = async <T>(idList: string[], filePath: string, columns: (keyof T)[], columnToFind: keyof T): Promise<GenericMusicModel<T>[]> => {
-        const musicData = await parseFile(`${filePath}`, (record: string[]) => {
-            const idColumnIndex = this.getIndexOfColumn<T>(columns, columnToFind);
-            return idList.indexOf(record[idColumnIndex]) > -1;
-        });
-
-        return this.mapListToModel<T>(musicData, columns);
-    }
-
-
-    private getIndexOfColumn = <T>(columns: (keyof T)[], columnToFind: keyof T) => {
-        return columns.findIndex(c => c === columnToFind);
-    }
-
-    private mapListToModel = <T>(data: string[], keys: (keyof T)[]): GenericMusicModel<T>[] => {
-        // Loop over all data items found in the MusicBrainz DB
-        return data.map(dataItem => {
-            // Map the data items string array to a readable object with columnToFind keys
-            return keys.reduce((model: GenericMusicModel<T>, key: keyof T, index: number) => {
-                model[key] = dataItem[index];
-
-                return model;
-            }, {} as GenericMusicModel<T>);
-        });
     }
 }

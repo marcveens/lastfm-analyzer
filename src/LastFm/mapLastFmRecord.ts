@@ -13,6 +13,8 @@ export const mapLastFmRecord = (raw: LastFmTrackRaw): LastFmTrack => {
         album: {
             name: raw.album['#text'],
             mbid: raw.album.mbid
-        }
+        },
+        image: raw.image[raw.image.length - 1]['#text'],
+        listened_utc: raw.date?.uts && !isNaN(Number(raw.date.uts)) ? parseInt(raw.date.uts) : undefined
     };
 };

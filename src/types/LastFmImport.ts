@@ -1,5 +1,3 @@
-import { ArtistColumns, ReleaseColumns, TrackColumns } from '../MusicBrainz/Columns';
-
 type LastFmPageAttributes = {
     page: string;
     total: string;
@@ -38,21 +36,20 @@ export type LastFmTrack = {
     track: {
         name: string;
         mbid: string;
-        extras?: TrackColumns;
         genres?: string[];
     },
     album: {
         name: string;
         mbid: string;
-        extras?: ReleaseColumns;
         genres?: string[];
     },
     artist: {
         name: string;
         mbid: string;
-        extras?: ArtistColumns;
         genres?: string[];
-    }
+    },
+    image: string;
+    listened_utc?: number;
 };
 
 export type LastFmPage = {

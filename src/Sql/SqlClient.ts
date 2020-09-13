@@ -1,11 +1,11 @@
 import mysql from 'mysql';
 
-export class MsSqlClient {
+export class SqlClient {
     connection = mysql.createConnection({
-        host: 'localhost',
-        database: 'musicbrainz',
-        user: 'root',
-        password: 'admin',
+        host: process.env.MYSQL_HOST,
+        database: process.env.MYSQL_DATABASE,
+        user: process.env.MYSQL_USER,
+        password: process.env.MYSQL_PASSWORD,
         charset: 'utf8mb4_unicode_ci',
         multipleStatements: true
     });
