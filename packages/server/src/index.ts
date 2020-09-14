@@ -3,6 +3,9 @@ import { ElasticSearchClient } from './ElasticSearch/ElasticSearchClient';
 import { Routes } from './Router/Routes';
 import { UI } from 'bull-board';
 import { MusicBrainzClient } from './MusicBrainz/MusicBrainzClient';
+import proxy from 'express-http-proxy';
+import cors from 'cors';
+
 
 require('dotenv').config();
 
@@ -18,6 +21,8 @@ if (!fileName) {
 
 // Jobs
 app.use('/admin/queues', UI);
+app.use(cors())
+app.use('/elastic', proxy('http://localhost:9200'));
 
 // Site
 app.get('/', Routes.homepage());
