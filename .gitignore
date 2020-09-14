@@ -103,5 +103,5 @@ dist
 # TernJS port file
 .tern-port
 
-src/data/*.json
-!src/data/testset.json
+packages/server/src/data/*.json
+!packages/server/src/data/testset.json
