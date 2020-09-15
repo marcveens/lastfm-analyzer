@@ -10,7 +10,10 @@ export class AppHome {
     render() {
         return (
             <div class="app-home">
-                <date-picker onDateChange={(date) => state.startDate = date} />
+                Start date
+                <date-picker onDateChange={event => state.startDate = event.detail} />
+                End date
+                <date-picker onDateChange={event => state.endDate = event.detail} />
                 <most-listened-artists />
             </div>
         );

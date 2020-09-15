@@ -11,7 +11,6 @@ export namespace Components {
     interface AppRoot {
     }
     interface DatePicker {
-        "onDateChange": (date: string) => void;
     }
     interface MostListenedArtists {
     }
@@ -54,7 +53,7 @@ declare namespace LocalJSX {
     interface AppRoot {
     }
     interface DatePicker {
-        "onDateChange"?: (date: string) => void;
+        "onDateChange"?: (event: CustomEvent<string>) => void;
     }
     interface MostListenedArtists {
     }

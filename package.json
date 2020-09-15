@@ -6,6 +6,7 @@
   },
   "dependencies": {},
   "scripts": {
-    "bootstrap": "npx lerna bootstrap"
+    "bootstrap": "npx lerna bootstrap",
+    "start": "npx lerna run start --stream"
   }
 }

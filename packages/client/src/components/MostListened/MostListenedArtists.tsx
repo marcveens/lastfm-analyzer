@@ -13,7 +13,11 @@ export class MostListenedArtists {
         this.artists = artists.aggregations.total_artist.buckets.map(x => ({ name: x.key, total: x.doc_count }));
 
         onChange('startDate', (date) => {
-            console.log('new date', date);
+            console.log('new start date', date);
+        });
+
+        onChange('endDate', (date) => {
+            console.log('new end date', date);
         });
     }
 

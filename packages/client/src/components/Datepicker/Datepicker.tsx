@@ -1,14 +1,14 @@
-import { Component, h, Prop } from '@stencil/core';
+import { Component, Event, EventEmitter, h } from '@stencil/core';
 
 @Component({
     tag: 'date-picker'
 })
 export class Datepicker {
-    @Prop() onDateChange: (date: string) => void;
+    @Event() dateChange: EventEmitter<string>;
 
     onChange = (event: Event) => {
         const elem = event.currentTarget as HTMLInputElement;
-        this.onDateChange(elem.value);
+        this.dateChange.emit(elem.value);
     }
 
     render() {
