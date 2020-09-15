@@ -1,4 +1,4 @@
-export interface SearchResponse<T> {
+export type SearchResponse<T, A = any> = {
     took: number;
     timed_out: boolean;
     _scroll_id?: string;
@@ -21,18 +21,31 @@ export interface SearchResponse<T> {
             sort?: string[];
         }>;
     };
-    aggregations?: any;
-}
+    aggregations?: A;
+};
 
-interface ShardsResponse {
+export type Aggregations = {
+    [key: string]: {
+        doc_count_error_upper_bound: number;
+        sum_other_doc_count: number;
+        buckets: Bucket[];
+    }
+};
+
+type Bucket = {
+    key: string;
+    doc_count: number;
+};
+
+type ShardsResponse = {
     total: number;
     successful: number;
     failed: number;
     skipped: number;
-}
+};
 
-interface Explanation {
+type Explanation = {
     value: number;
     description: string;
     details: Explanation[];
-}
+};

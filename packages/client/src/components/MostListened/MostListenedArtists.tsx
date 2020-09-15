@@ -1,5 +1,6 @@
 import { Component, h, State } from '@stencil/core';
 import { ElasticClient } from '../../api/ElasticClient';
+import { onChange } from '../Datepicker/date-store';
 
 @Component({
     tag: 'most-listened-artists'
@@ -8,19 +9,12 @@ export class MostListenedArtists {
     @State() artists: { name: string, total: number }[];
 
     async componentWillLoad() {
-        const artists = await ElasticClient.getElasticData({
-            size: 0,
-            aggs: {
-                total_artist: {
-                    terms: {
-                        field: 'artist.name.keyword',
-                        size: 10
-                    }
-                }
-            }
-        });
-
+        const artists = await ElasticClient.getMostListenedArtists();
         this.artists = artists.aggregations.total_artist.buckets.map(x => ({ name: x.key, total: x.doc_count }));
+
+        onChange('startDate', (date) => {
+            console.log('new date', date);
+        });
     }
 
     render() {
