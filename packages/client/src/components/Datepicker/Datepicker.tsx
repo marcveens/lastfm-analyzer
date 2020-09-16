@@ -1,9 +1,12 @@
-import { Component, Event, EventEmitter, h } from '@stencil/core';
+import { Component, Event, EventEmitter, h, Prop } from '@stencil/core';
 
 @Component({
     tag: 'date-picker'
 })
 export class Datepicker {
+    @Prop() value?: string;
+    @Prop() min?: string;
+    @Prop() max?: string;
     @Event() dateChange: EventEmitter<string>;
 
     onChange = (event: Event) => {
@@ -14,7 +17,7 @@ export class Datepicker {
     render() {
         return (
             <div>
-                <input type="date" onChange={this.onChange} />
+                <input type="date" onChange={this.onChange} value={this.value} min={this.min} max={this.max} />
             </div>
         );
     }

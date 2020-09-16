@@ -17,6 +17,8 @@
     "license": "MIT",
     "dependencies": {
         "@stencil/store": "^1.3.0",
+        "dayjs": "^1.8.35",
+        "qs": "^6.9.4",
         "status-code-enum": "^1.0.0"
     },
     "proxy": "http://localhost:9200"
