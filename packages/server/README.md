@@ -17,7 +17,7 @@ https://itnext.io/using-node-js-to-read-really-really-large-files-pt-1-d2057fe76
 https://stackoverflow.com/a/23695940/1223588 (ook event-stream)
 
 https://github.com/metabrainz/musicbrainz-server/blob/962c5c01e64988b8197eb6ea1325bec6af69ff7f/admin/sql/CreateTables.sql
-
+Cover art: https://musicbrainz.org/doc/Cover_Art_Archive/API
 
 track (0dc2dc49-1fb0-4571-a762-944f2b0679b9) -> recording (16295638)
 track (0dc2dc49-1fb0-4571-a762-944f2b0679b9) -> medium (1781941) -> release (1686270)

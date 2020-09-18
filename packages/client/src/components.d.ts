@@ -17,6 +17,8 @@ export namespace Components {
     }
     interface MostListenedArtists {
     }
+    interface MostListenedGenres {
+    }
 }
 declare global {
     interface HTMLAppHomeElement extends Components.AppHome, HTMLStencilElement {
@@ -43,11 +45,18 @@ declare global {
         prototype: HTMLMostListenedArtistsElement;
         new (): HTMLMostListenedArtistsElement;
     };
+    interface HTMLMostListenedGenresElement extends Components.MostListenedGenres, HTMLStencilElement {
+    }
+    var HTMLMostListenedGenresElement: {
+        prototype: HTMLMostListenedGenresElement;
+        new (): HTMLMostListenedGenresElement;
+    };
     interface HTMLElementTagNameMap {
         "app-home": HTMLAppHomeElement;
         "app-root": HTMLAppRootElement;
         "date-picker": HTMLDatePickerElement;
         "most-listened-artists": HTMLMostListenedArtistsElement;
+        "most-listened-genres": HTMLMostListenedGenresElement;
     }
 }
 declare namespace LocalJSX {
@@ -63,11 +72,14 @@ declare namespace LocalJSX {
     }
     interface MostListenedArtists {
     }
+    interface MostListenedGenres {
+    }
     interface IntrinsicElements {
         "app-home": AppHome;
         "app-root": AppRoot;
         "date-picker": DatePicker;
         "most-listened-artists": MostListenedArtists;
+        "most-listened-genres": MostListenedGenres;
     }
 }
 export { LocalJSX as JSX };
@@ -78,6 +90,7 @@ declare module "@stencil/core" {
             "app-root": LocalJSX.AppRoot & JSXBase.HTMLAttributes<HTMLAppRootElement>;
             "date-picker": LocalJSX.DatePicker & JSXBase.HTMLAttributes<HTMLDatePickerElement>;
             "most-listened-artists": LocalJSX.MostListenedArtists & JSXBase.HTMLAttributes<HTMLMostListenedArtistsElement>;
+            "most-listened-genres": LocalJSX.MostListenedGenres & JSXBase.HTMLAttributes<HTMLMostListenedGenresElement>;
         }
     }
 }

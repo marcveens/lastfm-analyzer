@@ -12,15 +12,8 @@ export class MostListenedArtists {
     async componentWillLoad() {
         await this.getArtists();
 
-        onChange('startDate', (date) => {
-            this.dateRange = { ...this.dateRange, startDate: date };
-            console.log('new start date', date);
-        });
-
-        onChange('endDate', (date) => {
-            this.dateRange = { ...this.dateRange, endDate: date };
-            console.log('new end date', date);
-        });
+        onChange('startDate', date => this.dateRange = { ...this.dateRange, startDate: date });
+        onChange('endDate', date => this.dateRange = { ...this.dateRange, endDate: date });
     }
 
     @Watch('dateRange')

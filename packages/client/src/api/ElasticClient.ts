@@ -33,6 +33,32 @@ export class ElasticClient {
         ));
     }
 
+    static getMostListenedGenres(startDate?: string, endDate?: string): Promise<SearchResponse<unknown, Aggregations>> {
+        return ElasticClient.getElasticData(Object.assign({
+            size: 0,
+            aggs: {
+                total_genres: {
+                    terms: {
+                        field: 'album.genres.keyword',
+                        size: 10
+                    }
+                }
+            }
+        },
+            startDate && endDate ? {
+                query: {
+                    range: {
+                        listened_utc: {
+                            gte: startDate,
+                            lte: endDate,
+                            format: 'yyyy-MM-dd'
+                        }
+                    }
+                }
+            } : {}
+        ));
+    }
+
     static getFirstAndLastListenDates(): Promise<SearchResponse<any, GetFirstAndLastListenDatesAggs>> {
         return ElasticClient.getElasticData({
             size: 0,
