@@ -19,6 +19,8 @@ export namespace Components {
     }
     interface MostListenedGenres {
     }
+    interface MostListenedGenresAllTime {
+    }
 }
 declare global {
     interface HTMLAppHomeElement extends Components.AppHome, HTMLStencilElement {
@@ -51,12 +53,19 @@ declare global {
         prototype: HTMLMostListenedGenresElement;
         new (): HTMLMostListenedGenresElement;
     };
+    interface HTMLMostListenedGenresAllTimeElement extends Components.MostListenedGenresAllTime, HTMLStencilElement {
+    }
+    var HTMLMostListenedGenresAllTimeElement: {
+        prototype: HTMLMostListenedGenresAllTimeElement;
+        new (): HTMLMostListenedGenresAllTimeElement;
+    };
     interface HTMLElementTagNameMap {
         "app-home": HTMLAppHomeElement;
         "app-root": HTMLAppRootElement;
         "date-picker": HTMLDatePickerElement;
         "most-listened-artists": HTMLMostListenedArtistsElement;
         "most-listened-genres": HTMLMostListenedGenresElement;
+        "most-listened-genres-all-time": HTMLMostListenedGenresAllTimeElement;
     }
 }
 declare namespace LocalJSX {
@@ -74,12 +83,15 @@ declare namespace LocalJSX {
     }
     interface MostListenedGenres {
     }
+    interface MostListenedGenresAllTime {
+    }
     interface IntrinsicElements {
         "app-home": AppHome;
         "app-root": AppRoot;
         "date-picker": DatePicker;
         "most-listened-artists": MostListenedArtists;
         "most-listened-genres": MostListenedGenres;
+        "most-listened-genres-all-time": MostListenedGenresAllTime;
     }
 }
 export { LocalJSX as JSX };
@@ -91,6 +103,7 @@ declare module "@stencil/core" {
             "date-picker": LocalJSX.DatePicker & JSXBase.HTMLAttributes<HTMLDatePickerElement>;
             "most-listened-artists": LocalJSX.MostListenedArtists & JSXBase.HTMLAttributes<HTMLMostListenedArtistsElement>;
             "most-listened-genres": LocalJSX.MostListenedGenres & JSXBase.HTMLAttributes<HTMLMostListenedGenresElement>;
+            "most-listened-genres-all-time": LocalJSX.MostListenedGenresAllTime & JSXBase.HTMLAttributes<HTMLMostListenedGenresAllTimeElement>;
         }
     }
 }

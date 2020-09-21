@@ -56,6 +56,11 @@ export class AppHome {
                             <most-listened-genres />
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col">
+                            <most-listened-genres-all-time />
+                        </div>
+                    </div>
                 </div>
             </div>
         );

@@ -1,3 +1,4 @@
+import { GenresAggregation } from '../components/MostListened/mappers/mapGenresToChartData';
 import { Aggregations, SearchResponse } from '../types/Elasticsearch';
 import { ApiHelper } from './ApiHelper';
 
@@ -57,6 +58,42 @@ export class ElasticClient {
                 }
             } : {}
         ));
+    }
+
+    static getMostListenedGenresPerMonth(): Promise<SearchResponse<unknown, GenresAggregation>> {
+        return ElasticClient.getElasticData({
+            size: 0,
+            aggs: {
+                group_by_month: {
+                    date_histogram: {
+                        field: 'listened_utc',
+                        calendar_interval: 'month'
+                    },
+                    aggs: {
+                        total_genres: {
+                            terms: {
+                                field: 'album.genres.keyword',
+                                size: 5
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    static getAllUniqueGenres(): Promise<SearchResponse<unknown, Aggregations>> {
+        return ElasticClient.getElasticData({
+            size: 0,
+            aggs: {
+                unique_genres: {
+                    terms: {
+                        field: 'album.genres.keyword',
+                        size: 1000
+                    }
+                }
+            }
+        });
     }
 
     static getFirstAndLastListenDates(): Promise<SearchResponse<any, GetFirstAndLastListenDatesAggs>> {

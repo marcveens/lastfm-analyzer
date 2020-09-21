@@ -1,0 +1,78 @@
+{
+    "group_by_month": {
+        "buckets": [
+            {
+                "key_as_string": "1257033600",
+                "key": 1257033600000,
+                "doc_count": 19,
+                "total_genres": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 10,
+                    "buckets": [
+                        {
+                            "key": "rock",
+                            "doc_count": 6
+                        },
+                        {
+                            "key": "hard rock",
+                            "doc_count": 4
+                        },
+                        {
+                            "key": "heavy metal",
+                            "doc_count": 4
+                        },
+                        {
+                            "key": "metal",
+                            "doc_count": 4
+                        },
+                        {
+                            "key": "alternative rock",
+                            "doc_count": 3
+                        }
+                    ]
+                }
+            },
+            {
+                "key_as_string": "1259625600",
+                "key": 1259625600000,
+                "doc_count": 0,
+                "total_genres": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 0,
+                    "buckets": []
+                }
+            },
+            {
+                "key_as_string": "1262304000",
+                "key": 1262304000000,
+                "doc_count": 1137,
+                "total_genres": {
+                    "doc_count_error_upper_bound": 0,
+                    "sum_other_doc_count": 607,
+                    "buckets": [
+                        {
+                            "key": "rock",
+                            "doc_count": 288
+                        },
+                        {
+                            "key": "heavy metal",
+                            "doc_count": 196
+                        },
+                        {
+                            "key": "alternative rock",
+                            "doc_count": 163
+                        },
+                        {
+                            "key": "pop",
+                            "doc_count": 114
+                        },
+                        {
+                            "key": "hard rock",
+                            "doc_count": 100
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

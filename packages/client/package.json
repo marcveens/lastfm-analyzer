@@ -6,13 +6,14 @@
     "scripts": {
         "build": "stencil build",
         "start": "stencil build --dev --watch --serve",
-        "test": "stencil test --spec --e2e",
-        "test.watch": "stencil test --spec --e2e --watchAll",
+        "test": "stencil test --spec",
+        "test.watch": "stencil test --spec --watchAll",
         "generate": "stencil generate"
     },
     "devDependencies": {
         "@stencil/core": "^2.0.0",
-        "@stencil/router": "^1.0.1"
+        "@stencil/router": "^1.0.1",
+        "jest-cli": "^26.4.2"
     },
     "license": "MIT",
     "dependencies": {

@@ -45,7 +45,7 @@ export class MostListenedGenres {
                 categories: this.genres.map(g => g.name)
             }
         };
-        const chart = new ApexCharts(document.getElementById('myChart'), options);
+        const chart = new ApexCharts(document.getElementById('genres-chart'), options);
         chart.render();
     }
 
@@ -53,7 +53,7 @@ export class MostListenedGenres {
         return (
             <div>
                 <h3>Top 10 most listened genres</h3>
-                <div id="myChart" />
+                <div id="genres-chart" />
 
                 <ul>
                     {this.genres.map(genre => (

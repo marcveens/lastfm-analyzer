@@ -32,7 +32,7 @@ export type Aggregations = {
     }
 };
 
-type Bucket = {
+export type Bucket = {
     key: string;
     doc_count: number;
 };
