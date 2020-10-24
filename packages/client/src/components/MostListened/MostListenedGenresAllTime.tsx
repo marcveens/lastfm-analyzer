@@ -45,7 +45,7 @@ export class MostListenedGenresAllTime {
         const chart = new ApexCharts(document.getElementById('genre-trend'), options);
         // Works, but performance is horrible..
         // Might want to look if I only want to show shorter periods or leave out some genres..
-        // chart.render();
+        chart.render();
     }
 
     render() {

@@ -5,8 +5,7 @@ import { QueryString } from '../../utils/UrlUtils';
 import { onChange, state } from '../Datepicker/date-store';
 
 @Component({
-    tag: 'app-home',
-    styleUrl: 'app-home.css'
+    tag: 'app-home'
 })
 export class AppHome {
     firstDate: string;
@@ -56,11 +55,11 @@ export class AppHome {
                             <most-listened-genres />
                         </div>
                     </div>
-                    <div class="row">
+                    {/* <div class="row">
                         <div class="col">
                             <most-listened-genres-all-time />
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         );

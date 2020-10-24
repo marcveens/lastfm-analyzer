@@ -54,12 +54,6 @@ export class MostListenedGenres {
             <div>
                 <h3>Top 10 most listened genres</h3>
                 <div id="genres-chart" />
-
-                <ul>
-                    {this.genres.map(genre => (
-                        <li>{genre.name} ({genre.total})</li>
-                    ))}
-                </ul>
             </div>
         );
     }

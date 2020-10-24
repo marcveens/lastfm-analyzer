@@ -1,3 +1,4 @@
+import { ArtistsFirstAppearancesAggs } from '../components/Artists/FirstAppearance';
 import { GenresAggregation } from '../components/MostListened/mappers/mapGenresToChartData';
 import { Aggregations, SearchResponse } from '../types/Elasticsearch';
 import { ApiHelper } from './ApiHelper';
@@ -128,6 +129,39 @@ export class ElasticClient {
                 }
             }
         });
+    }
+
+    static getArtistFirstAppearances(artist?: string): Promise<SearchResponse<unknown, ArtistsFirstAppearancesAggs>> {
+        return ElasticClient.getElasticData(Object.assign({
+            size: 0,
+            aggs: {
+                artists: {
+                    terms: {
+                        field: 'artist.name.keyword'
+                    },
+                    aggs: {
+                        first_appearance: {
+                            top_hits: {
+                                size: 1,
+                                sort: [
+                                    {
+                                        listened_utc: {
+                                            order: 'asc'
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        }, artist ? {
+            query: {
+                match: {
+                    'artist.name': artist
+                }
+            }
+        } : {}));
     }
 
     static getElasticData<T>(query: Object): Promise<SearchResponse<T>> {
